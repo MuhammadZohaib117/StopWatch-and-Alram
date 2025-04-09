@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Watch with Alarm</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        
+        .watch-container {
+            background-color: #333;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 300px;
+        }
+        
+        .time-display {
+            color: #fff;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+        
+        .date-display {
+            color: #ccc;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        
+        .alarm-section {
+            background-color: #444;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .alarm-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        input[type="time"] {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        #alarmStatus {
+            color: #ffcc00;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .alarm-active {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { color: #ffcc00; }
+            50% { color: #ff0000; }
+            100% { color: #ffcc00; }
+        }
+    </style>
+</head>
+<body>
+    <div class="watch-container">
+        <div class="time-display" id="time"></div>
+        <div class="date-display" id="date"></div>
+        
+        <div class="alarm-section">
+            <h3 style="color: white; margin-top: 0;">Set Alarm</h3>
+            <div class="alarm-controls">
+                <input type="time" id="alarmTime">
+                <button id="setAlarm">Set Alarm</button>
+            </div>
+            <div id="alarmStatus"></div>
+            <button id="stopAlarm" style="display: none; background: #f44336;">Stop Alarm</button>
+        </div>
+    </div>
+
+    <audio id="alarmSound" loop>
+        <source src="audio/azan.mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        // Display current time and date
+        function updateTime() {
+            const now = new Date();
+            
+            // Update time
+            const timeElement = document.getElementById('time');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Update date
+            const dateElement = document.getElementById('date');
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const dayName = days[now.getDay()];
+            const monthName = months[now.getMonth()];
+            const date = now.getDate();
+            const year = now.getFullYear();
+            dateElement.textContent = `${dayName}, ${monthName} ${date}, ${year}`;
+            
+            // Check alarm
+            checkAlarm(now);
+        }
+        
+        // Alarm functionality
+        let alarmTime = null;
+        const alarmSound = document.getElementById('alarmSound');
+        
+        document.getElementById('setAlarm').addEventListener('click', function() {
+            const alarmTimeInput = document.getElementById('alarmTime').value;
+            
+            if (!alarmTimeInput) {
+                alert('Please set a valid time for the alarm');
+                return;
+            }
+            
+            const [hours, minutes] = alarmTimeInput.split(':');
+            const now = new Date();
+            
+            alarmTime = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                parseInt(hours),
+                parseInt(minutes),
+                0
+            );
+            
+            // If the alarm time is in the past, set it for tomorrow
+            if (alarmTime < now) {
+                alarmTime.setDate(alarmTime.getDate() + 1);
+            }
+            
+            document.getElementById('alarmStatus').textContent = 
+                `Alarm set for ${alarmTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+            document.getElementById('alarmStatus').classList.add('alarm-active');
+        });
+        
+        document.getElementById('stopAlarm').addEventListener('click', function() {
+            alarmSound.pause();
+            alarmSound.currentTime = 0;
+            document.getElementById('stopAlarm').style.display = 'none';
+            document.getElementById('alarmStatus').textContent = 'Alarm stopped';
+            document.getElementById('alarmStatus').classList.remove('alarm-active');
+        });
+        
+        function checkAlarm(now) {
+            if (!alarmTime) return;
+            
+            if (now.getHours() === alarmTime.getHours() && 
+                now.getMinutes() === alarmTime.getMinutes() && 
+                now.getSeconds() === 0) {
+                
+                alarmSound.play();
+                document.getElementById('stopAlarm').style.display = 'block';
+                document.getElementById('alarmStatus').textContent = 'ALARM! ALARM! ALARM!';
+            }
+        }
+        
+        // Update time every second
+        setInterval(updateTime, 1000);
+        updateTime(); // Initial call
+    </script>
+</body>
+</html>
